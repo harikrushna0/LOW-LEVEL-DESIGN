@@ -1,3 +1,19 @@
+
+Requirements:
+Multiplayer Game: The game should support multiple players.
+Customizable Board: The board should allow customization in terms of:
+Snake and ladder placements.
+Board size.
+Customizable Number of Dice: The number of dice used should be customizable.
+Game Board Loading:
+Load the configured board size.
+Load the configured snakes and ladders.
+Load the configured number of dice.
+Load the players, and all players should start at the starting position.
+
+
+
+
 #include <iostream>
 #include <vector>
 #include <map>
