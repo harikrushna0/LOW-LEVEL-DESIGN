@@ -1,0 +1,162 @@
+Designing an Elevator system using Object-Oriented Design (OOD) principles involves defining the classes, methods, and interactions necessary to simulate a multi-floor elevator system. Below is a low-level design approach in C++.
+
+### Requirements:
+1. **Support Multiple Elevators**: The system should manage multiple elevators.
+2. **Support Multiple Floors**: Elevators can move between multiple floors.
+3. **Handle Requests**: The system should handle requests for elevators from different floors and requests for floor selection from inside the elevator.
+4. **Elevator Movement**: The elevator should move up and down between floors, stopping at requested floors.
+5. **Scheduling Algorithm**: Implement a basic scheduling algorithm (e.g., FCFS, or an optimized version based on the direction of the elevator).
+
+### Key Classes:
+1. **ElevatorSystem**: Manages all elevators.
+2. **Elevator**: Represents an individual elevator.
+3. **Floor**: Represents a floor, which can generate requests for elevators.
+4. **Request**: Represents a request made by a user.
+5. **Direction**: Enum to represent the direction of the elevator.
+
+### C++ Implementation
+
+```cpp
+#include <iostream>
+#include <vector>
+#include <queue>
+#include <set>
+
+enum Direction { UP, DOWN, IDLE };
+
+class Request {
+    int sourceFloor;
+    int destinationFloor;
+public:
+    Request(int source, int destination) 
+        : sourceFloor(source), destinationFloor(destination) {}
+
+    int getSourceFloor() const {
+        return sourceFloor;
+    }
+
+    int getDestinationFloor() const {
+        return destinationFloor;
+    }
+};
+
+class Elevator {
+    int currentFloor;
+    Direction direction;
+    std::queue<Request> requests;
+
+public:
+    Elevator(int startFloor) : currentFloor(startFloor), direction(IDLE) {}
+
+    int getCurrentFloor() const {
+        return currentFloor;
+    }
+
+    Direction getDirection() const {
+        return direction;
+    }
+
+    void addRequest(const Request& request) {
+        requests.push(request);
+        if (direction == IDLE) {
+            if (request.getSourceFloor() > currentFloor) {
+                direction = UP;
+            } else {
+                direction = DOWN;
+            }
+        }
+    }
+
+    void move() {
+        if (!requests.empty()) {
+            Request currentRequest = requests.front();
+            if (currentFloor < currentRequest.getSourceFloor()) {
+                direction = UP;
+                currentFloor++;
+            } else if (currentFloor > currentRequest.getSourceFloor()) {
+                direction = DOWN;
+                currentFloor--;
+            } else {
+                if (currentFloor < currentRequest.getDestinationFloor()) {
+                    direction = UP;
+                    currentFloor++;
+                } else if (currentFloor > currentRequest.getDestinationFloor()) {
+                    direction = DOWN;
+                    currentFloor--;
+                } else {
+                    std::cout << "Stopping at floor " << currentFloor << ".\n";
+                    requests.pop();
+                }
+            }
+        }
+
+        if (requests.empty()) {
+            direction = IDLE;
+        }
+    }
+};
+
+class ElevatorSystem {
+    std::vector<Elevator> elevators;
+public:
+    ElevatorSystem(int numElevators, int startFloor = 0) {
+        for (int i = 0; i < numElevators; ++i) {
+            elevators.emplace_back(startFloor);
+        }
+    }
+
+    void requestElevator(int sourceFloor, int destinationFloor) {
+        // Simple strategy: assign the request to the first available elevator
+        int bestElevator = 0;
+        int minDistance = std::abs(elevators[0].getCurrentFloor() - sourceFloor);
+
+        for (int i = 1; i < elevators.size(); ++i) {
+            int distance = std::abs(elevators[i].getCurrentFloor() - sourceFloor);
+            if (distance < minDistance) {
+                bestElevator = i;
+                minDistance = distance;
+            }
+        }
+
+        elevators[bestElevator].addRequest(Request(sourceFloor, destinationFloor));
+        std::cout << "Assigned Elevator " << bestElevator << " to request from floor " << sourceFloor << " to floor " << destinationFloor << ".\n";
+    }
+
+    void step() {
+        for (auto& elevator : elevators) {
+            elevator.move();
+        }
+    }
+};
+
+int main() {
+    ElevatorSystem system(3); // 3 elevators
+
+    system.requestElevator(3, 7);
+    system.requestElevator(1, 5);
+    system.requestElevator(6, 2);
+
+    for (int i = 0; i < 10; ++i) {
+        system.step();
+    }
+
+    return 0;
+}
+```
+
+### Explanation:
+1. **Direction Enum**: Represents the direction in which the elevator is moving (UP, DOWN, or IDLE).
+2. **Request Class**: Represents an elevator request, including the source and destination floors.
+3. **Elevator Class**: Represents an individual elevator. It manages the current floor, the direction, and a queue of requests. It moves according to the requests and the current direction.
+4. **ElevatorSystem Class**: Manages multiple elevators. It assigns requests to the closest elevator and handles the overall operation of the system.
+
+### Key Features:
+- **Multi-elevator Support**: The system supports multiple elevators and assigns requests based on proximity.
+- **Basic Scheduling**: The system assigns requests to the nearest available elevator using a simple strategy.
+- **Elevator Movement**: Elevators move according to the requests and handle stops at the requested floors.
+
+### Further Enhancements:
+1. **Optimized Scheduling**: Implement more sophisticated algorithms to optimize elevator assignments based on current load, direction, etc.
+2. **Handling Concurrent Requests**: Improve request handling to better manage simultaneous requests and overlapping routes.
+3. **Elevator States**: Add more detailed states for the elevators, such as `MOVING_TO_SOURCE`, `MOVING_TO_DESTINATION`, etc.
+4. **Maintenance Mode**: Implement functionality to handle elevator maintenance and out-of-service scenarios.
