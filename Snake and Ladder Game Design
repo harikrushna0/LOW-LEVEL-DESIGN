@@ -1,0 +1,132 @@
+#include <iostream>
+#include <vector>
+#include <map>
+#include <queue>
+#include <cstdlib>
+#include <ctime>
+
+class Player {
+    std::string name;
+    int position;
+public:
+    Player(std::string name) : name(name), position(0) {}
+    
+    std::string getName() const {
+        return name;
+    }
+    
+    int getPosition() const {
+        return position;
+    }
+    
+    void setPosition(int pos) {
+        position = pos;
+    }
+};
+
+class Board {
+    int size;
+    std::map<int, int> snakes;
+    std::map<int, int> ladders;
+public:
+    Board(int size) : size(size) {}
+
+    void addSnake(int head, int tail) {
+        snakes[head] = tail;
+    }
+    
+    void addLadder(int start, int end) {
+        ladders[start] = end;
+    }
+    
+    int getSize() const {
+        return size;
+    }
+    
+    int getNewPosition(int position) const {
+        if (snakes.find(position) != snakes.end()) {
+            return snakes.at(position);
+        } else if (ladders.find(position) != ladders.end()) {
+            return ladders.at(position);
+        }
+        return position;
+    }
+};
+
+class Game {
+    Board board;
+    std::queue<Player> players;
+    bool gameOver;
+    int numDice;
+
+    int rollDice() const {
+        int total = 0;
+        for (int i = 0; i < numDice; ++i) {
+            total += (std::rand() % 6) + 1;
+        }
+        return total;
+    }
+public:
+    Game(int boardSize, const std::vector<std::pair<int, int>>& snakes, const std::vector<std::pair<int, int>>& ladders, const std::vector<std::string>& playerNames, int numDice) 
+        : board(boardSize), gameOver(false), numDice(numDice) {
+        
+        // Add snakes and ladders to the board
+        for (const auto& snake : snakes) {
+            board.addSnake(snake.first, snake.second);
+        }
+        for (const auto& ladder : ladders) {
+            board.addLadder(ladder.first, ladder.second);
+        }
+        
+        // Initialize players
+        for (const auto& name : playerNames) {
+            players.push(Player(name));
+        }
+    }
+    
+    void play() {
+        std::srand(std::time(nullptr)); // Seed random number generator
+        
+        while (!gameOver) {
+            Player currentPlayer = players.front();
+            players.pop();
+            
+            int diceRoll = rollDice();
+            std::cout << currentPlayer.getName() << " rolled a " << diceRoll << ".\n";
+            
+            int newPosition = currentPlayer.getPosition() + diceRoll;
+            
+            if (newPosition > board.getSize()) {
+                std::cout << currentPlayer.getName() << " needs " << (board.getSize() - currentPlayer.getPosition()) << " to win. Skipping turn.\n";
+            } else {
+                newPosition = board.getNewPosition(newPosition);
+                currentPlayer.setPosition(newPosition);
+                std::cout << currentPlayer.getName() << " moved to position " << newPosition << ".\n";
+                
+                if (newPosition == board.getSize()) {
+                    std::cout << currentPlayer.getName() << " wins!\n";
+                    gameOver = true;
+                    continue;
+                }
+            }
+            
+            players.push(currentPlayer); // Add player back to the queue
+        }
+    }
+};
+
+int main() {
+    // Example board configuration
+    std::vector<std::pair<int, int>> snakes = {{16, 6}, {47, 26}, {49, 11}, {56, 53}, {62, 19}, {64, 60}, {87, 24}, {93, 73}, {95, 75}, {98, 78}};
+    std::vector<std::pair<int, int>> ladders = {{1, 38}, {4, 14}, {9, 31}, {21, 42}, {28, 84}, {36, 44}, {51, 67}, {71, 91}, {80, 100}};
+    std::vector<std::string> playerNames = {"Player1", "Player2"};
+    
+    // Example game settings
+    int boardSize = 100;
+    int numDice = 2; // Customizable number of dice
+
+    Game game(boardSize, snakes, ladders, playerNames, numDice);
+    game.play();
+    
+    return 0;
+}
