@@ -1,0 +1,131 @@
+#include <iostream>
+#include <vector>
+
+using namespace std;
+
+class Board {
+public:
+    Board() {
+        grid = vector<vector<int>>(3, vector<int>(3, 0)); // Initialize a 3x3 grid with 0 (empty)
+    }
+
+    void display() const {
+        for (const auto& row : grid) {
+            for (int cell : row) {
+                char symbol = cell == 0 ? ' ' : (cell == 1 ? 'X' : 'O');
+                cout << symbol << ' ';
+            }
+            cout << endl;
+        }
+        cout << "-----------" << endl;
+    }
+
+    bool update(int x, int y, int player) {
+        if (grid[x][y] == 0) { // Check if the cell is empty
+            grid[x][y] = player; // Set the cell to the player's value (1 or 2)
+            return true;
+        }
+        return false;
+    }
+
+    int checkWinner() const {
+        // Check rows and columns
+        for (int i = 0; i < 3; ++i) {
+            if (grid[i][0] != 0 && grid[i][0] == grid[i][1] && grid[i][1] == grid[i][2]) return grid[i][0];
+            if (grid[0][i] != 0 && grid[0][i] == grid[1][i] && grid[1][i] == grid[2][i]) return grid[0][i];
+        }
+
+        // Check diagonals
+        if (grid[0][0] != 0 && grid[0][0] == grid[1][1] && grid[1][1] == grid[2][2]) return grid[0][0];
+        if (grid[0][2] != 0 && grid[0][2] == grid[1][1] && grid[1][1] == grid[2][0]) return grid[0][2];
+
+        return 0; // No winner yet
+    }
+
+    bool isFull() const {
+        for (const auto& row : grid) {
+            for (int cell : row) {
+                if (cell == 0) return false;
+            }
+        }
+        return true;
+    }
+
+private:
+    vector<vector<int>> grid;
+};
+
+class Player {
+public:
+    Player(int id, string name) : id(id), name(name) {}
+
+    int getId() const {
+        return id;
+    }
+
+    string getName() const {
+        return name;
+    }
+
+private:
+    int id;
+    string name;
+};
+
+class Game {
+public:
+    Game(const Player& p1, const Player& p2) : player1(p1), player2(p2), currentTurn(&player1) {}
+
+    void playTurn(int x, int y) {
+    if (board.update(x, y, currentTurn->getId())) {
+        board.display();
+        int winner = board.checkWinner(); // Separate statement for initialization
+        if (winner != 0) {
+            cout << "Player " << (winner == player1.getId() ? player1.getName() : player2.getName()) << " wins!" << endl;
+            gameOver = true;
+        } else if (board.isFull()) {
+            cout << "It's a draw!" << endl;
+            gameOver = true;
+        } else {
+            currentTurn = (currentTurn == &player1) ? &player2 : &player1;
+        }
+    } else {
+        cout << "Invalid move. Try again." << endl;
+    }
+}
+
+    bool isGameOver() const {
+        return gameOver;
+    }
+
+    const Player& getCurrentPlayer() const {
+        return *currentTurn;
+    }
+
+private:
+    Board board;
+    Player player1;
+    Player player2;
+    Player* currentTurn;
+    bool gameOver = false;
+};
+
+int main() {
+    Player player1(1, "Alice"); // Player 1 is represented by 1 (X)
+    Player player2(2, "Bob");   // Player 2 is represented by 2 (O)
+    Game game(player1, player2);
+
+    int x, y;
+    while (!game.isGameOver()) {
+        cout << "Player " << game.getCurrentPlayer().getName() << "'s turn. Enter row and column: ";
+        cin >> x >> y;
+        if (x < 0 || x >= 3 || y < 0 || y >= 3) {
+            cout << "Invalid position. Try again." << endl;
+            continue;
+        }
+        game.playTurn(x, y);
+    }
+
+    return 0;
+}
+Tic Tac Toe
